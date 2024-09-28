@@ -1,0 +1,14 @@
+{
+    "files": [
+        "widget.py",
+        "form.ui",
+        "AniDBClient.py",
+        "AniDBFinderDialog.py",
+        "EpisodeChecker.py",
+        "HentaiDatabase.py",
+        "HentaiFolderReader.py",
+        "HentaiJSON.py",
+        "TagIDReader.py",
+        "TagListUpdater.py"
+    ]
+}
