@@ -20,7 +20,7 @@ LewdWatcherQT is a Python-based Qt application designed to monitor and control H
 - Monitors Hentai Folder (not done)
 - Scans and categorizes Hentais on tags and metadata.
 - Provides a user-friendly interface
-- Update the Tags from AniDB and saves them local in an Json File.
+- Update the Tags from AniDB and saves them local in an Json File (Currently a Problem with running it in a sperate Thread)
 - Seaches for Hentais and Rename
 
 ## Getting Started
