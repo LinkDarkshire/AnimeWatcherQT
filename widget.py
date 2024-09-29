@@ -78,7 +78,6 @@ class Widget(QWidget):
         self.updater = TagListUpdater()  # Instantiate your TagListUpdater
     
         # Connect signals and slots
-        self.updater.progress.connect(self.update_label)  # Connect progress signal to a slot
         self.updater.finished.connect(self.on_update_finished)  # Handle completion
     
         # Move updater to separate thread
@@ -104,14 +103,9 @@ class Widget(QWidget):
     
         # Reactivate the button after thread completion
         self.ui.bUpdateTags.setEnabled(True)
-    
-    @pyqtSlot(str)
-    def update_label(self, value):
-        # This slot updates the label safely in the main thread
-        self.ui.lOutput.setText(f"Read Tags on Page: {value}")
 
 # Create QApplication and Widget instances
 app = QApplication(sys.argv)
 window = Widget()
 window.show()
-sys.exit(app.exec()))
+sys.exit(app.exec())

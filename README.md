@@ -1,4 +1,4 @@
-# LewdWatcherQT: A Qt-based Adult Content Monitoring and Control Tool
+# LewdWatcherQT: A Qt-based Hentai Content Monitoring and Control Tool
 
 ## Table of Contents
 
@@ -25,23 +25,22 @@ LewdWatcherQT is a Python-based Qt application designed to monitor and control H
 
 ## Getting Started
 
-1.
-Clone the repository:
+1. Clone the repository:
 git clone https://github.com/your_username/LewdWatcherQT.git
-2.
-Install the required dependencies:
+
+2. Install the required dependencies:
 pip install -r requirements.txt
-3.
-(Workaround until I made an exe)
+
+3. (Workaround until I made an exe)
 Start Visual Studio Code (or any other IDE) with widget.py as you main
 
 ## Dependencies
 
 LewdWatcherQT is built using the Qt framework and requires a compatible C++ compiler. The following dependencies are required:
 
-Python 3.x
-PySide6
-Qt 6.x
+- Python 3.x
+- PySide6
+- Qt 6.x
 
 ## Configuration
 
@@ -49,8 +48,8 @@ Qt 6.x
 
 ## Usage
 
-Search Folder = Select your Hentai Folder to start the Metadata collection
-Update Tags = (not needes as long as AniDB dont make changes) Get all Tags (not the Summerizing Tags) from AniDb with ther ID
+- Search Folder = Select your Hentai Folder to start the Metadata collection
+- Update Tags = (not needes as long as AniDB dont make changes) Get all Tags (not the Summerizing Tags) from AniDb with ther ID
 
 ## Contributing
 
