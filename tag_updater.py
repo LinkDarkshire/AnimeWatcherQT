@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 
 class TagListUpdater(QObject):
     finished = pyqtSignal()
