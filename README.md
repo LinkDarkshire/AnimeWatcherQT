@@ -133,6 +133,8 @@ This application follows AniDB's API guidelines:
 1. by converting to asyncron I seem to have destroyed the infoFile storage -> wip
 2. the tags list is not complete the whole categories are missing -> sort out or ignore ?
 3. the missing number of episodes is still missing
+4. saving Infos in DB not working at the moment
+5. Stop search by user
 
 ## Contributing
 
