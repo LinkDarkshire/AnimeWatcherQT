@@ -112,7 +112,15 @@ class AnimeProcessingWorker(QThread):
                 tagreader = TagIDReader(logger=self.logger)
                 nfo_parser = NFOParser(logger=self.logger)
 
-                async with AsyncAniDBClient(self.config, self.logger) as aniDB_client:
+                settings = self.config.get_anidb_settings()
+                if not settings:
+                    raise ValueError("No AniDB settings configured")
+
+                async with AsyncAniDBClient(
+                    credentials={'username': settings['username'], 'password': settings['password']},
+                    logger=self.logger,
+                    max_retries=settings['max_retries']
+                ) as aniDB_client:
                     for anime_name in os.listdir(self.folder_path):
                         full_path = os.path.join(self.folder_path, anime_name)
                         if os.path.isdir(full_path):
@@ -125,21 +133,23 @@ class AnimeProcessingWorker(QThread):
                                 nfo_parser
                             )
                             if anime_info:
-                                # Signal to update UI
                                 self.anime_processed.emit(anime_info)
 
+                self.finished.emit()
             except Exception as e:
                 self.logger.error(f"Error in processing thread: {str(e)}")
                 self.error_occurred.emit(str(e))
+                self.finished.emit()
 
         asyncio.run(main())
 
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Initialize logger and config first
+        # Initialize logger first
         self.logger = AppLogger()
-        self.config = ConfigManager()
+        # Pass logger to ConfigManager
+        self.config = ConfigManager(logger=self.logger)
 
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -185,6 +195,12 @@ class Widget(QWidget):
                 self.ui.lOutput.setText("Please select a folder first")
                 return
 
+            # Check credentials before starting
+            if not self.config.check_config_integrity():
+                self.logger.error("Invalid configuration")
+                self.ui.lOutput.setText("Please configure AniDB credentials first")
+                return
+
             self.logger.info(f"Processing folder: {folder_path}")
 
             # Deaktiviere Buttons während der Verarbeitung
@@ -215,19 +231,30 @@ class Widget(QWidget):
 
     def on_anime_processed(self, anime_info):
         """Handle processed anime information"""
-        self.displayAnimeInfo(anime_info)
-        current_progress = self.ui.progressBar.value() + 1
-        self.ui.progressBar.setValue(current_progress)
+        try:
+            self.displayAnimeInfo(anime_info)
+            current_progress = self.ui.progressBar.value() + 1
+            self.ui.progressBar.setValue(current_progress)
+        except Exception as e:
+            self.logger.error(f"Error handling processed anime: {str(e)}")
 
     def on_error_occurred(self, error_message):
         """Handle processing errors"""
+        self.logger.error(f"Processing error: {error_message}")
         self.ui.lOutput.setText(f"Error: {error_message}")
+        self.setUIEnabled(True)
 
     def on_processing_finished(self):
         """Handle completion of processing"""
-        self.setUIEnabled(True)
-        self.ui.lOutput.setText("Processing completed")
-        QTimer.singleShot(2000, lambda: self.ui.progressBar.setVisible(False))
+        try:
+            self.setUIEnabled(True)
+            if hasattr(self, 'worker'):
+                self.worker.deleteLater()
+                delattr(self, 'worker')
+            self.ui.lOutput.setText("Processing completed")
+            QTimer.singleShot(2000, lambda: self.ui.progressBar.setVisible(False))
+        except Exception as e:
+            self.logger.error(f"Error in processing finished handler: {str(e)}")
 
     def displayAnimeInfo(self, anime_info):
         try:
