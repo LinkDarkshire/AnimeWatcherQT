@@ -68,6 +68,10 @@ class Ui_Widget(object):
         self.cleanButton.setObjectName(u"cleanButton")
         self.cleanButton.setGeometry(QRect(680, 190, 101, 31))
         self.cleanButton.setLocale(QLocale(QLocale.German, QLocale.Germany))
+        self.bCancel = QPushButton(Widget)
+        self.bCancel.setObjectName(u"bCancel")
+        self.bCancel.setEnabled(False)
+        self.bCancel.setGeometry(QRect(680, 510, 101, 31))
 
         self.retranslateUi(Widget)
 
@@ -84,5 +88,6 @@ class Ui_Widget(object):
         self.bGetHentai.setText(QCoreApplication.translate("Widget", u"Get Animes", None))
         self.lOutput.setText("")
         self.cleanButton.setText(QCoreApplication.translate("Widget", u"Clean up", None))
+        self.bCancel.setText(QCoreApplication.translate("Widget", u"Cancel", None))
     # retranslateUi
 

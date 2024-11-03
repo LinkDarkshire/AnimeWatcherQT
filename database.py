@@ -3,9 +3,9 @@ from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
 import json
 
-class HentaiDatabase:
+class AnimeDatabase:
     """
-    A class used to manage a database of hentai anime information.
+    A class used to manage a database of anime information.
 
     Attributes
     ----------
@@ -17,7 +17,7 @@ class HentaiDatabase:
         Logger instance for tracking database operations.
     """
 
-    def __init__(self, logger=None, db_path="hentai.db" ):
+    def __init__(self, logger=None, db_path="anime.db" ):
         self.logger = logger
         self.db_path = db_path
         self.logger.info(f"Initializing database connection to {db_path}")
@@ -36,8 +36,8 @@ class HentaiDatabase:
         self.logger.info("Creating/verifying database tables")
 
         create_table_queries = {
-            'hentai_info': """
-            CREATE TABLE IF NOT EXISTS hentai_info (
+            'anime_info': """
+            CREATE TABLE IF NOT EXISTS anime_info (
                 aid INTEGER PRIMARY KEY,
                 year TEXT,
                 type TEXT,
@@ -56,13 +56,13 @@ class HentaiDatabase:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tag_name TEXT UNIQUE
             );""",
-            'hentai_tags': """
-            CREATE TABLE IF NOT EXISTS hentai_tags (
-                hentai_id INTEGER,
+            'anime_tags': """
+            CREATE TABLE IF NOT EXISTS anime_tags (
+                anime_id INTEGER,
                 tag_id INTEGER,
-                FOREIGN KEY (hentai_id) REFERENCES hentai_info(aid),
+                FOREIGN KEY (anime_id) REFERENCES anime_info(aid),
                 FOREIGN KEY (tag_id) REFERENCES tags(id),
-                PRIMARY KEY (hentai_id, tag_id)
+                PRIMARY KEY (anime_id, tag_id)
             );"""
         }
 
@@ -99,7 +99,7 @@ class HentaiDatabase:
         self.logger.debug(f"Anime data: {json.dumps(anime_info, ensure_ascii=False)}")
 
         add_anime_query = """
-        INSERT INTO hentai_info (
+        INSERT INTO anime_info (
             aid, year, type, romaji, kanji, synonyms, episodes, ep_count,
             special_count, tag_id_list, tag_weigth_list, path
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -133,13 +133,13 @@ class HentaiDatabase:
                 path
             ))
 
-            hentai_id = self.cursor.lastrowid
+            anime_id = self.cursor.lastrowid
             self.conn.commit()
 
             self.logger.info(f"Successfully added/updated anime with ID {anime_info['aid']}")
-            self.logger.debug(f"Database record ID: {hentai_id}")
+            self.logger.debug(f"Database record ID: {anime_id}")
 
-            return hentai_id
+            return anime_id
 
         except sqlite3.Error as e:
             self.logger.error(f"Database error while adding anime: {str(e)}")
@@ -153,13 +153,13 @@ class HentaiDatabase:
             self.logger.error(f"Unexpected error while adding anime: {str(e)}")
             return None
 
-    def add_tags_and_link_to_hentai(self, hentai_id: int, tag_names: List[str]) -> bool:
+    def add_tags_and_link_to_anime(self, anime_id: int, tag_names: List[str]) -> bool:
         """
         Adds tags to the database and links them to the specified anime.
 
         Parameters
         ----------
-        hentai_id : int
+        anime_id : int
             The ID of the anime to link tags to
         tag_names : List[str]
             List of tag names to add and link
@@ -169,7 +169,7 @@ class HentaiDatabase:
         bool
             True if operation was successful, False otherwise
         """
-        self.logger.info(f"Adding and linking tags for anime ID {hentai_id}")
+        self.logger.info(f"Adding and linking tags for anime ID {anime_id}")
         self.logger.debug(f"Tags to process: {tag_names}")
 
         try:
@@ -188,14 +188,14 @@ class HentaiDatabase:
 
                 # Link tag to anime
                 self.cursor.execute(
-                    "INSERT INTO hentai_tags (hentai_id, tag_id) VALUES (?, ?)",
-                    (hentai_id, tag_id)
+                    "INSERT INTO anime_tags (anime_id, tag_id) VALUES (?, ?)",
+                    (anime_id, tag_id)
                 )
 
-                self.logger.debug(f"Tag {tag_name} (ID: {tag_id}) linked to anime {hentai_id}")
+                self.logger.debug(f"Tag {tag_name} (ID: {tag_id}) linked to anime {anime_id}")
 
             self.conn.commit()
-            self.logger.info(f"Successfully processed {len(tag_names)} tags for anime {hentai_id}")
+            self.logger.info(f"Successfully processed {len(tag_names)} tags for anime {anime_id}")
             return True
 
         except sqlite3.Error as e:
@@ -224,7 +224,7 @@ class HentaiDatabase:
 
         try:
             self.cursor.execute(
-                "SELECT 1 FROM hentai_info WHERE romaji = ? LIMIT 1",
+                "SELECT 1 FROM anime_info WHERE romaji = ? LIMIT 1",
                 (romaji,)
             )
             exists = self.cursor.fetchone() is not None
@@ -248,7 +248,7 @@ class HentaiDatabase:
         self.logger.info("Retrieving complete anime list")
 
         try:
-            self.cursor.execute("SELECT * FROM hentai_info")
+            self.cursor.execute("SELECT * FROM anime_info")
             results = self.cursor.fetchall()
 
             self.logger.info(f"Retrieved {len(results)} anime records")
@@ -281,10 +281,10 @@ class HentaiDatabase:
             if existing_paths is None:
                 # Delete all entries
                 self.logger.info("Removing all entries from database")
-                self.cursor.execute("SELECT romaji, path FROM hentai_info")
+                self.cursor.execute("SELECT romaji, path FROM anime_info")
                 all_entries = self.cursor.fetchall()
                 
-                self.cursor.execute("DELETE FROM hentai_info")
+                self.cursor.execute("DELETE FROM anime_info")
                 deleted_count = len(all_entries)
                 removed_anime = [entry[0] for entry in all_entries]
                 
@@ -293,12 +293,12 @@ class HentaiDatabase:
                 valid_paths = set(str(Path(p).resolve()) for p in existing_paths)
                 
                 # Get entries with invalid paths
-                self.cursor.execute("SELECT aid, romaji, path FROM hentai_info")
+                self.cursor.execute("SELECT aid, romaji, path FROM anime_info")
                 entries = self.cursor.fetchall()
                 
                 for aid, romaji, path in entries:
                     if not path or str(Path(path).resolve()) not in valid_paths:
-                        self.cursor.execute("DELETE FROM hentai_info WHERE aid = ?", (aid,))
+                        self.cursor.execute("DELETE FROM anime_info WHERE aid = ?", (aid,))
                         deleted_count += 1
                         removed_anime.append(romaji)
                         self.logger.debug(f"Removed entry for {romaji} with invalid path: {path}")

@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox
 from PySide6.QtCore import QThread, QTimer, Signal
 from pathlib import Path
 from async_client import AsyncAniDBClient
-from database import HentaiDatabase
+from database import AnimeDatabase
 from json_handler import AnimeInfoManager
 from tag_updater import TagListUpdater
 from id_reader import TagIDReader
@@ -23,13 +23,25 @@ from ui_form import Ui_Widget
 class AnimeProcessingWorker(QThread):
     anime_processed = Signal(dict)  # Signal für verarbeiteten Anime
     error_occurred = Signal(str)    # Signal für Fehler
+    processing_finished = Signal(bool)  # Neues Signal mit cancelled Status
+
     def __init__(self, config, logger, folder_path):
         super().__init__()
         self.config = config
         self.logger = logger
         self.folder_path = folder_path
-        
+        self._should_cancel = False
+        self._is_running = False
+
+    def cancel(self):
+        """Markiert den Worker zum Beenden"""
+        self._should_cancel = True
+        self.logger.info("Cancel requested")  
+
     async def process_single_anime(self, anime_name, full_path, db, aniDB_client, tagreader, nfo_parser):
+        if self._should_cancel:
+            self.logger.info(f"Skipping {anime_name} due to cancel request")
+            return None
         try:
             self.logger.debug(f"Processing anime: {anime_name}")
             
@@ -106,9 +118,13 @@ class AnimeProcessingWorker(QThread):
             return None
 
     def run(self):
+        self._is_running = True
         async def main():
             try:
-                db = HentaiDatabase(logger=self.logger)
+                if self._should_cancel:
+                    return
+                
+                db = AnimeDatabase(logger=self.logger)
                 tagreader = TagIDReader(logger=self.logger)
                 nfo_parser = NFOParser(logger=self.logger)
 
@@ -122,6 +138,10 @@ class AnimeProcessingWorker(QThread):
                     max_retries=settings['max_retries']
                 ) as aniDB_client:
                     for anime_name in os.listdir(self.folder_path):
+                        if self._should_cancel:
+                            self.logger.info("Processing cancelled by user")
+                            return
+                        
                         full_path = os.path.join(self.folder_path, anime_name)
                         if os.path.isdir(full_path):
                             anime_info = await self.process_single_anime(
@@ -135,13 +155,22 @@ class AnimeProcessingWorker(QThread):
                             if anime_info:
                                 self.anime_processed.emit(anime_info)
 
-                self.finished.emit()
+                
+
             except Exception as e:
                 self.logger.error(f"Error in processing thread: {str(e)}")
                 self.error_occurred.emit(str(e))
-                self.finished.emit()
+            finally:
+                self._is_running = False
+                # Emit finished signal before asyncio.run ends
+                self.processing_finished.emit(self._should_cancel)
 
-        asyncio.run(main())
+        try:
+            asyncio.run(main())
+        except Exception as e:
+            self.logger.error(f"Error in asyncio.run: {str(e)}")
+            self._is_running = False
+            self.processing_finished.emit(self._should_cancel)
 
 class Widget(QWidget):
     def __init__(self, parent=None):
@@ -166,6 +195,12 @@ class Widget(QWidget):
             # Neue Clean-Button Verbindung
             self.ui.cleanButton.clicked.connect(self.clean_up)
 
+            # Cancel-Button Connection
+            self.ui.bCancel.clicked.connect(self.cancel_processing)
+
+            # Initial verstecken
+            self.ui.bCancel.setVisible(False)
+
             # Progress Bar initial setup
             self.ui.progressBar.setValue(0)
             self.ui.progressBar.setVisible(False)
@@ -175,6 +210,13 @@ class Widget(QWidget):
         except Exception as e:
             self.logger.error(f"Error initializing UI: {str(e)}")
             self.ui.lOutput.setText("Error initializing application")
+
+    def closeEvent(self, event):
+        """Handle application closing"""
+        if hasattr(self, 'worker') and self.worker._is_running:
+            self.worker.cancel()
+            self.worker.wait()  # Warte auf Thread-Beendigung
+        event.accept()
 
     def selectFolder(self):
         try:
@@ -189,6 +231,10 @@ class Widget(QWidget):
 
     def processFolder(self):
         try:
+            if hasattr(self, 'worker') and self.worker._is_running:
+                self.logger.warning("Processing already running")
+                return
+            
             folder_path = self.ui.tPath.toPlainText()
             if not folder_path:
                 self.logger.warning("No folder path selected")
@@ -203,8 +249,11 @@ class Widget(QWidget):
 
             self.logger.info(f"Processing folder: {folder_path}")
 
-            # Deaktiviere Buttons während der Verarbeitung
+            # UI Update
             self.setUIEnabled(False)
+            self.ui.bCancel.setVisible(True)
+            self.ui.bCancel.setEnabled(True)
+            self.ui.bCancel.setText("Cancel")
             self.ui.progressBar.setVisible(True)
 
             # Zähle zunächst die Gesamtanzahl der zu verarbeitenden Ordner
@@ -221,7 +270,7 @@ class Widget(QWidget):
             self.worker = AnimeProcessingWorker(self.config, self.logger, folder_path)
             self.worker.anime_processed.connect(self.on_anime_processed)
             self.worker.error_occurred.connect(self.on_error_occurred)
-            self.worker.finished.connect(self.on_processing_finished)
+            self.worker.processing_finished.connect(self.on_processing_finished)
             self.worker.start()
 
         except Exception as e:
@@ -244,14 +293,23 @@ class Widget(QWidget):
         self.ui.lOutput.setText(f"Error: {error_message}")
         self.setUIEnabled(True)
 
-    def on_processing_finished(self):
+    def on_processing_finished(self, was_cancelled: bool):
         """Handle completion of processing"""
         try:
-            self.setUIEnabled(True)
             if hasattr(self, 'worker'):
+                if self.worker._is_running:
+                    self.worker.wait()  # Warte auf Thread-Beendigung
                 self.worker.deleteLater()
                 delattr(self, 'worker')
-            self.ui.lOutput.setText("Processing completed")
+
+            self.setUIEnabled(True)
+            self.ui.bCancel.setVisible(False)
+            
+            if was_cancelled:
+                self.ui.lOutput.setText("Processing cancelled")
+            else:
+                self.ui.lOutput.setText("Processing completed")
+                
             QTimer.singleShot(2000, lambda: self.ui.progressBar.setVisible(False))
         except Exception as e:
             self.logger.error(f"Error in processing finished handler: {str(e)}")
@@ -368,7 +426,7 @@ class Widget(QWidget):
             # Second phase: Clean database
             self.logger.info("Starting database cleanup")
             try:
-                db = HentaiDatabase(logger=self.logger)
+                db = AnimeDatabase(logger=self.logger)
                 deleted_entries, removed_anime = db.clean_database(remaining_valid_paths)
 
                 # Clear the anime list widget
@@ -397,6 +455,15 @@ class Widget(QWidget):
             self.setUIEnabled(True)
             QTimer.singleShot(2000, lambda: self.ui.progressBar.setVisible(False))
 
+    def cancel_processing(self):
+        """Handler für Cancel-Button"""
+        if hasattr(self, 'worker'):
+            self.logger.info("Cancel requested by user")
+            self.ui.bCancel.setEnabled(False)
+            self.ui.bCancel.setText("Canceling...")
+            self.ui.lOutput.setText("Canceling operation...")
+            self.worker.cancel()
+
     def setUIEnabled(self, enabled: bool):
         """Enable or disable UI elements during processing."""
         self.ui.bSearchFolder.setEnabled(enabled)
@@ -404,7 +471,6 @@ class Widget(QWidget):
         self.ui.bGetHentai.setEnabled(enabled)
         self.ui.cleanButton.setEnabled(enabled)
         self.ui.bRename.setEnabled(enabled)
-
         if enabled:
             self.ui.progressBar.setValue(0)
             self.ui.progressBar.setVisible(False)
