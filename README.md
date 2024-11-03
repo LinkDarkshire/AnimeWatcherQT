@@ -1,4 +1,4 @@
-# Lewd Watcher
+# Anime Watcher
 
 A Python-based desktop application for managing anime collections using the AniDB UDP API. The application helps organize your anime collection by fetching metadata from AniDB and maintaining a local database.
 
