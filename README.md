@@ -4,14 +4,34 @@ A Python-based desktop application for managing anime collections using the AniD
 
 ## Features
 
-- Fetch anime metadata from AniDB
-- Local SQLite database for storing anime information
-- JSON-based metadata storage per anime
-- NFO file support for media centers
-- Tag management and synchronization
-- Progress tracking
-- Batch processing capabilities
-- Configurable retry mechanisms for API timeouts
+### Directory Scanner
+
+- Recursive scanning of folder structures
+- Anime file detection
+- Filename and format validation
+
+### Metadata Management
+
+- AniDB API integration
+- Web scraping for tag information
+- Local JSON storage per anime
+- Central database integration
+
+### Episode Tracking
+
+- Automatic detection of existing episodes in EXX format (e.g., E01, E02)
+- Missing episode identification through comparison with total count
+- Overview display of missing episodes (e.g., "Episodes 4-12 missing")
+- Collection status monitoring per anime
+- Automatic updates when adding new episodes
+
+### Episode Management
+
+- Standardized episode file naming in "EXX" format
+- Optional automatic renaming of non-standard files
+- Season-based episode grouping
+- Status tracking (available/missing) per episode
+- Notifications for newly available episodes
 
 ## Prerequisites
 
