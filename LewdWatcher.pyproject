@@ -3,12 +3,17 @@
         "widget.py",
         "form.ui",
         "AniDBClient.py",
-        "AniDBFinderDialog.py",
-        "EpisodeChecker.py",
-        "HentaiDatabase.py",
-        "HentaiFolderReader.py",
-        "HentaiJSON.py",
-        "TagIDReader.py",
-        "TagListUpdater.py"
+        "finder_dialog.py",
+        "episode_checker.py",
+        "database.py",
+        "folder_reader.py",
+        "json_handler.py",
+        "id_reader.py",
+        "tag_updater.py",
+        "ui_form.py",
+        "logger.py",
+        "config_manager.py",
+        "async_client.py",
+        "nfo_parser.py"
     ]
 }

@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 
 class TagListUpdater(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(str)
+    progress = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -46,7 +46,7 @@ class TagListUpdater(QObject):
 
     def fetch_next_page(self):
         print(f"Fetching tags from page {self.page}")
-        self.progress.emit(self.page)  # Fortschritt signalisieren
+        self.progress.emit(f"Fetching tags from page {self.page}")  # Fortschritt signalisieren
         page_tags = self.get_tags(self.page)
 
         if not page_tags:
@@ -65,3 +65,4 @@ class TagListUpdater(QObject):
         # Speichere die Tags in eine JSON-Datei
         with open("tags.json", "w") as f:
             json.dump(self.tags, f, indent=4)
+        self.dialog.close()

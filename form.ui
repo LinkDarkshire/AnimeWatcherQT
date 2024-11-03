@@ -42,7 +42,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QTextEdit" name="textEdit">
+  <widget class="QTextEdit" name="tPath">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -59,7 +59,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>527</y>
+     <y>500</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -94,7 +94,46 @@
     <string>Search:</string>
    </property>
   </widget>
-  <widget class="QListView" name="listView">
+  <widget class="QPushButton" name="bRename">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>140</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Rename</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bGetHentai">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>90</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Get Animes</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lOutput">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>540</y>
+     <width>761</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QListWidget" name="listHentai">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -104,30 +143,58 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="bRename">
+  <widget class="QProgressBar" name="progressBar">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>679</x>
-     <y>87</y>
+     <x>20</x>
+     <y>560</y>
+     <width>761</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="locale">
+    <locale language="German" country="Germany"/>
+   </property>
+   <property name="value">
+    <number>0</number>
+   </property>
+   <property name="textVisible">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cleanButton">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>190</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="locale">
+    <locale language="German" country="Germany"/>
+   </property>
+   <property name="text">
+    <string>Clean up</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bCancel">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>510</y>
      <width>101</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Rename</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="lOutput">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>570</y>
-     <width>751</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
+    <string>Cancel</string>
    </property>
   </widget>
  </widget>

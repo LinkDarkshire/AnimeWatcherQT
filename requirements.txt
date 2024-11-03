@@ -1,7 +1,24 @@
-pyperclip==1.9.0
-requests==2.31.0
-beautifulsoup4==4.12.2
-PyQt5==5.15.9
-PySide6==6.7.3
-PySide6_Addons==6.7.3
-PySide6_Essentials==6.7.3
+# GUI Framework
+PySide6>=6.4.0
+
+# Network and API
+aiohttp>=3.8.0
+requests>=2.26.0
+urllib3>=1.26.7
+
+# Data Processing
+beautifulsoup4>=4.9.3
+
+# File Handling
+configparser>=5.0.2
+
+# Clipboard Support
+pyperclip>=1.8.2
+
+# Type Hints
+typing-extensions>=4.0.0
+
+# Development Tools (optional)
+# pytest>=6.2.5
+# black>=21.12b0
+# pylint>=2.12.2
