@@ -324,33 +324,66 @@ class Widget(QWidget):
 
     def update_tags(self):
         try:
-            self.logger.info("Starting tag update")
-            self.thread = QThread()
-            self.updater = TagListUpdater(logger=self.logger)
+            self.logger.info("Setting up tag update process")
+        
+            # Create thread and worker
+            self.tag_thread = QThread()
+            self.tag_updater = TagListUpdater(logger=self.logger)
 
-            self.updater.finished.connect(self.on_update_finished)
-            self.updater.moveToThread(self.thread)
-            self.thread.started.connect(self.updater.update_tags_json)
-
-            self.thread.start()
+            # Move worker to thread
+            self.tag_updater.moveToThread(self.tag_thread)
+        
+            # Connect signals
+            self.tag_thread.started.connect(self.tag_updater.run)
+            self.tag_updater.finished.connect(self.on_update_finished)
+        
+            # Connect progress and status signals
+            self.tag_updater.progress.connect(self.update_progress)
+            self.tag_updater.total_pages_found.connect(self.setup_progress)
+            self.tag_updater.status.connect(lambda msg: self.ui.lOutput.setText(msg))
+        
+            # Prepare UI
+            self.ui.progressBar.setValue(0)
+            self.ui.progressBar.setVisible(True)
             self.ui.bUpdateTags.setEnabled(False)
-
+        
+            # Start thread
+            self.logger.info("Starting tag update thread")
+            self.tag_thread.start()
+        
         except Exception as e:
-            self.logger.error(f"Error updating tags: {str(e)}")
-            self.ui.lOutput.setText("Error updating tags")
+            self.logger.error(f"Error setting up tag update: {str(e)}")
+            self.ui.lOutput.setText("Error starting tag update")
             self.ui.bUpdateTags.setEnabled(True)
+
+    def setup_progress(self, total_pages):
+        """Richtet die Fortschrittsanzeige ein"""
+        self.ui.progressBar.setMaximum(total_pages)
+        self.ui.progressBar.setValue(0)
+
+    def update_progress(self, current_page):
+        """Aktualisiert die Fortschrittsanzeige"""
+        self.ui.progressBar.setValue(current_page)
+        self.ui.lOutput.setText(f"Processing page {current_page} of {self.ui.progressBar.maximum()}")
 
     def on_update_finished(self):
+        """Handler für das Ende des Updates"""
         try:
-            self.thread.quit()
-            self.thread.wait()
-
-            self.updater.deleteLater()
-            self.thread.deleteLater()
+            self.logger.info("Tag update finished")
+            self.ui.lOutput.setText("Tags updated successfully")
+        
+            # Thread sauber beenden
+            self.tag_thread.quit()
+            self.tag_thread.wait()
+        
+            # Objekte aufräumen
+            self.tag_updater.deleteLater()
+            self.tag_thread.deleteLater()
 
             self.ui.bUpdateTags.setEnabled(True)
-            self.logger.info("Tag update completed")
-            self.ui.lOutput.setText("Tags updated successfully")
+            
+            self.ui.bUpdateTags.setEnabled(True)
+            QTimer.singleShot(2000, lambda: self.ui.progressBar.setVisible(False))
 
         except Exception as e:
             self.logger.error(f"Error in update finished: {str(e)}")
